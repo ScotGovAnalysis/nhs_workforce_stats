@@ -1,17 +1,5 @@
----
-title: "NHS Scotland Official Statistics RAP"
-author: "Workforce and Pay Analytics"
-date: "`r format(Sys.Date(), '%d %B %Y')`"
-output: word_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
-
-
-```{r colours, include=TRUE}
-```
+# NHS Scotland Official Statistics RAP
+Workforce and Pay Analytics
 
 
 ## Official Statistics for NHS Scotland workforce
