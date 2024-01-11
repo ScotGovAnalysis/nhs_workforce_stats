@@ -1,0 +1,83 @@
+---
+title: "FMQ A&E"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+consultant_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_consultant_wte.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+# specify and format the briefing rounds
+new_quarter <- as.Date(paste0(briefing_round, "-01"), format = "%Y-%B-%d")
+new_quarter <-format(new_quarter, format = "%B %Y")
+
+
+prev_quarter <- as.Date(paste0(prevquarter_briefing_round, "-01"), format = "%Y-%B-%d")
+prev_quarter <-format(prev_quarter, format = "%B %Y")
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+# Add in 2006 figure for A&E consultants
+emergency_cons_06 <- 75.755
+
+# summarise data
+# for previous quarter
+emergency_cons_prev <- consultant_wte %>%
+  filter(subjob_family == "Emergency medicine") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+#for current quarter
+emergency_cons_new <- consultant_wte %>%
+  filter(subjob_family == "Emergency medicine") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+ae_prev_ndiff <- emergency_cons_prev - emergency_cons_06
+ae_new_ndiff <- emergency_cons_new - emergency_cons_06
+
+# calculate the percentage difference with 2006
+ae_prev_pdiff <- (ae_prev_ndiff/emergency_cons_06) *100
+ae_new_pdiff <- (ae_new_ndiff/emergency_cons_06) *100
+```
+
+
+**Previous quarter (`r prev_quarter`):**
+
+A&E Staffing - Under the SNP, a `r round_half_up(ae_prev_pdiff, 1)`% increase in A&E consultants (up `r round_half_up(ae_prev_ndiff, 1)` WTE - from `r round_half_up(emergency_cons_06, 1)` WTE in September 2006 to `r round_half_up(emergency_cons_prev, 1)` WTE in `r prev_quarter`).
+
+
+**New quarter (`r new_quarter`):**
+
+A&E Staffing - Under the SNP, a `r round_half_up(ae_new_pdiff, 1)`% increase in A&E consultants (up `r round_half_up(ae_new_ndiff, 1)` WTE - from `r round_half_up(emergency_cons_06, 1)` WTE in September 2006 to `r round_half_up(emergency_cons_new, 1)` WTE in `r new_quarter`).
+
+
+
+

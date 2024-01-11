@@ -1,0 +1,109 @@
+---
+title: "FMQ Cancer"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+consultant_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_consultant_wte.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+# specify and format the briefing rounds
+new_quarter <- as.Date(paste0(briefing_round, "-01"), format = "%Y-%B-%d")
+new_quarter <-format(new_quarter, format = "%B %Y")
+
+
+prev_quarter <- as.Date(paste0(prevquarter_briefing_round, "-01"), format = "%Y-%B-%d")
+prev_quarter <-format(prev_quarter, format = "%B %Y")
+```
+
+```{r, include=TRUE, echo=FALSE}
+
+### For this FMQ, we include figures for oncology and radiology specialties
+
+# Add in 2006 figure for Oncology consultants
+oncology_cons_06 <- 69.542
+
+# summarise data
+# for previous quarter
+oncology_cons_prev <- consultant_wte %>%
+  filter(subjob_family %in% c("Clinical oncology", "Medical oncology")) %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+#for current quarter
+oncology_cons_new <- consultant_wte %>%
+  filter(subjob_family %in% c("Clinical oncology", "Medical oncology")) %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+oncology_prev_ndiff <- oncology_cons_prev - oncology_cons_06
+oncology_new_ndiff <- oncology_cons_new - oncology_cons_06
+
+# calculate the percentage difference with 2006
+oncology_prev_pdiff <- (oncology_prev_ndiff/oncology_cons_06) *100
+oncology_new_pdiff <- (oncology_new_ndiff/oncology_cons_06) *100
+
+
+
+### Add in 2006 figure for Radiology consultants
+radiology_cons_06 <- 223.525
+
+# summarise data
+# for previous quarter
+radiology_cons_prev <- consultant_wte %>%
+  filter(subjob_family == "Clinical radiology") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+#for current quarter
+radiology_cons_new <- consultant_wte %>%
+  filter(subjob_family == "Clinical radiology") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+radiology_prev_ndiff <- radiology_cons_prev - radiology_cons_06
+radiology_new_ndiff <- radiology_cons_new - radiology_cons_06
+
+# calculate the percentage difference with 2006
+radiology_prev_pdiff <- (radiology_prev_ndiff/radiology_cons_06) *100
+radiology_new_pdiff <- (radiology_new_ndiff/radiology_cons_06) *100
+```
+
+
+**Previous quarter (`r prev_quarter`):**
+
+* Under the SNP, there has been a `r round_half_up(oncology_prev_pdiff, 1)`% increase in consultant oncologists (from `r round_half_up(oncology_cons_06, 1)` WTE in September 2006 to `r round_half_up(oncology_cons_prev, 1)` WTE in `r prev_quarter`).
+* We've increased consultant radiologists by `r round_half_up(radiology_prev_pdiff, 1)`% (from `r round_half_up(radiology_cons_06, 1)` WTE in September 2006 to `r round_half_up(radiology_cons_prev, 1)` WTE in `r prev_quarter`).
+
+
+**New quarter (`r new_quarter`):**
+
+* Under the SNP, there has been a `r round_half_up(oncology_new_pdiff, 1)`% increase in consultant oncologists (from `r round_half_up(oncology_cons_06, 1)` WTE in September 2006 to `r round_half_up(oncology_cons_new, 1)` WTE in `r new_quarter`).
+* We've increased consultant radiologists by `r round_half_up(radiology_new_pdiff, 1)`% (from `r round_half_up(radiology_cons_06, 1)` WTE in September 2006 to `r round_half_up(radiology_cons_new, 1)` WTE in `r new_quarter`).

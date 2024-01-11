@@ -1,0 +1,141 @@
+---
+title: "FMQ Maternity"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+consultant_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_consultant_wte.rds")),
+  )
+
+nm_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_nm_wte.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+### For this FMQ, we include figures for qualified midwives and Obstetrics & Gynaecology consultants
+
+# Add in 2006 figure for qualified midwives
+#qual_midwives_06 <- 2798.962 #I can't verify this figure. Took it from old Scotland table
+
+# summarise data
+# for 2007
+qual_midwives_07 <- nm_wte %>%
+  filter(subjob_family %in% midwifery_specialties) %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(sep2007_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep2007_sum)
+
+# for previous year
+qual_midwives_prevyear <- nm_wte %>%
+  filter(subjob_family %in% midwifery_specialties) %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(prevyear_sum = sum(prevyear_wte)) %>%
+  dplyr::pull(prevyear_sum)
+
+# for previous quarter
+qual_midwives_prevquarter <- nm_wte %>%
+  filter(subjob_family %in% midwifery_specialties) %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+#for current quarter
+qual_midwives_new <- nm_wte %>%
+ filter(subjob_family %in% midwifery_specialties) %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+qualmidwives_prev_ndiff <- qual_midwives_prevquarter - qual_midwives_07
+qualmidwives_new_ndiff <- qual_midwives_new - qual_midwives_07
+
+# calculate the percentage difference with 2007
+qualmidwives_prev_pdiff <- (qualmidwives_prev_ndiff/qual_midwives_07) *100
+qualmidwives_new_pdiff <- (qualmidwives_new_ndiff/qual_midwives_07) *100
+
+# calculate the difference and percentage with previous year
+qualmidwives_prevyear_ndiff <- qual_midwives_new - qual_midwives_prevyear
+qualmidwives_prevyear_pdiff <- (qualmidwives_prevyear_ndiff/qual_midwives_prevyear) *100
+
+# calculate the difference and percentage with previous quarter
+qualmidwives_prevqtr_ndiff <- qual_midwives_new - qual_midwives_prevquarter
+qualmidwives_prevqtr_pdiff <- (qualmidwives_prevqtr_ndiff/qual_midwives_prevquarter) *100
+
+
+
+### Add in 2006 figure for Obstetrics and Gynaecology consultants
+obgyn_cons_06 <- 174.849
+
+# summarise data
+
+# for previous year
+obgyn_cons_prevyear <- consultant_wte %>%
+  filter(subjob_family == "Obstetrics & gynaecology") %>%
+  summarise(prevyear_sum = sum(prevyear_wte)) %>%
+  dplyr::pull(prevyear_sum)
+
+# for previous quarter
+obgyn_cons_prevquarter <- consultant_wte %>%
+  filter(subjob_family == "Obstetrics & gynaecology") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+#for current quarter
+obgyn_cons_new <- consultant_wte %>%
+  filter(subjob_family == "Obstetrics & gynaecology") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+obgyn_prev_ndiff <- obgyn_cons_prevquarter - obgyn_cons_06
+obgyn_new_ndiff <- obgyn_cons_new - obgyn_cons_06
+
+# calculate the percentage difference with 2006
+obgyn_prev_pdiff <- (obgyn_prev_ndiff/obgyn_cons_06) *100
+obgyn_new_pdiff <- (obgyn_new_ndiff/obgyn_cons_06) *100
+
+# calculate the difference and percentage with previous year
+obgyn_prevyear_ndiff <- obgyn_cons_new - obgyn_cons_prevyear
+obgyn_prevyear_pdiff <- (obgyn_prevyear_ndiff/obgyn_cons_prevyear) *100
+
+# calculate the difference and percentage with previous quarter
+obgyn_prevqtr_ndiff <- obgyn_cons_new - obgyn_cons_prevquarter
+obgyn_prevqtr_pdiff <- (obgyn_prevqtr_ndiff/obgyn_cons_prevquarter) *100
+```
+
+
+**Previous quarter (`r prev_quarter`):**
+
+* The number of qualified midwives as at `r prev_quarter` is `r format(round_half_up(qual_midwives_prevquarter, 1), big.mark = ",")` WTE. This is `r ifelse((qualmidwives_prev_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(qualmidwives_prev_ndiff, 1)` WTE (`r round_half_up(qualmidwives_prev_pdiff, 1)`%) from September 2007.
+* As at `r prev_quarter`, there are `r round_half_up(obgyn_cons_prevquarter, 1)` WTE consultants in Obstetrics & Gynaecology, `r ifelse((obgyn_prev_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(obgyn_prev_ndiff, 1)` WTE (`r round_half_up(obgyn_prev_pdiff, 1)`%) from September 2006.
+
+
+**New quarter (`r new_quarter`):**
+
+* The number of qualified midwives as at `r new_quarter` is `r format(round_half_up(qual_midwives_new, 1), big.mark = ",")` WTE. This is `r ifelse((qualmidwives_new_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(qualmidwives_new_ndiff, 1)` WTE (`r round_half_up(qualmidwives_new_pdiff, 1)`%) from September 2007, `r ifelse((qualmidwives_prevyear_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(qualmidwives_prevyear_ndiff, 1)` WTE (`r round_half_up(qualmidwives_prevyear_pdiff, 1)`%) from `r prev_year` and `r ifelse((qualmidwives_prevqtr_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(qualmidwives_prevqtr_ndiff, 1)` WTE (`r round_half_up(qualmidwives_prevqtr_pdiff, 1)`%) from `r prev_quarter`.
+
+* As at `r new_quarter`, there are `r round_half_up(obgyn_cons_new, 1)` WTE consultants in Obstetrics & Gynaecology, `r ifelse((obgyn_new_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(obgyn_new_ndiff, 1)` WTE (`r round_half_up(obgyn_new_pdiff, 1)`%) from September 2006, `r ifelse((obgyn_prevyear_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(obgyn_prevyear_ndiff, 1)` WTE (`r round_half_up(obgyn_prevyear_pdiff, 1)`%) from `r prev_year` and `r ifelse((obgyn_prevqtr_pdiff < 0), "a decrease", "an increase")` of `r round_half_up(obgyn_prevqtr_ndiff, 1)` WTE (`r round_half_up(obgyn_prevqtr_pdiff, 1)`%) from `r prev_quarter`.

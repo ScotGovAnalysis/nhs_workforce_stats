@@ -1,0 +1,100 @@
+---
+title: "FMQ NHS 24"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+nhs24_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_nhs24_wte.rds")),
+  )
+
+hc_wte_data <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_hc_wte_data.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+# For 2007 figure
+nhs24_wte_07 <- nhs24_wte %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous year
+nhs24_wte_prevyear <- nhs24_wte %>%
+  summarise(prevyear_sum = sum(prevyear_wte)) %>%
+  dplyr::pull(prevyear_sum)
+
+# For previous quarter
+nhs24_wte_prevquarter <- nhs24_wte %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+nhs24_wte_new <- nhs24_wte %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+nhs24wte_prev_ndiff <- nhs24_wte_prevquarter - nhs24_wte_07
+nhs24wte_new_ndiff <- nhs24_wte_new - nhs24_wte_07
+
+# calculate the percentage difference with 2006
+nhs24wte_prev_pdiff <- (nhs24wte_prev_ndiff/nhs24_wte_07) *100
+nhs24wte_new_pdiff <- (nhs24wte_new_ndiff/nhs24_wte_07) *100
+
+# calculate the difference and percentage with previous year
+nhs24wte_prevyear_ndiff <- nhs24_wte_new - nhs24_wte_prevyear
+nhs24wte_prevyear_pdiff <- (nhs24wte_prevyear_ndiff/nhs24_wte_prevyear) *100
+
+# calculate the difference and percentage with previous quarter
+nhs24wte_prevqtr_ndiff <- nhs24_wte_new - nhs24_wte_prevquarter
+nhs24wte_prevqtr_pdiff <- (nhs24wte_prevqtr_ndiff/nhs24_wte_prevquarter) *100
+
+
+# For headcount figures of previous and current quarter
+nhs24_hc_prevquarter <- hc_wte_data %>%
+  filter(board == "NHS 24") %>%
+  filter(census_date %in% prevquarter_briefing_round) %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Headcount") %>%
+  dplyr::pull(value)
+
+
+nhs24_hc_new <- hc_wte_data %>%
+  filter(board == "NHS 24") %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Headcount") %>%
+  dplyr::pull(value)
+```
+
+
+**Previous quarter (`r prev_quarter`):**
+
+* As at `r prev_quarter`, NHS 24 has a total of `r format(round_half_up(nhs24_wte_prevquarter, 1), big.mark = ",")` WTE (`r format(round_half_up(nhs24_hc_prevquarter, 1), big.mark = ",")` headcount) staff in post. Total staff in post in NHS 24 have `r ifelse((nhs24wte_prev_pdiff < 0), "decreased", "increased")` by `r round_half_up(nhs24wte_prev_ndiff, 1)` WTE (`r round_half_up(nhs24wte_prev_pdiff, 1)`%) since September 2007.
+
+
+**New quarter (`r new_quarter`):**
+
+* As at `r new_quarter`, NHS 24 has a total of `r format(round_half_up(nhs24_wte_new, 1), big.mark = ",")` WTE (`r format(round_half_up(nhs24_hc_new, 1), big.mark = ",")` headcount) staff in post. Total staff in post in NHS 24 have `r ifelse((nhs24wte_new_pdiff < 0), "decreased", "increased")` by `r round_half_up(nhs24wte_new_ndiff, 1)` WTE (`r round_half_up(nhs24wte_new_pdiff, 1)`%) since September 2007, and have `r ifelse((nhs24wte_prevqtr_pdiff < 0), "decreased", "increased")` by `r round_half_up(nhs24wte_prevqtr_ndiff, 1)` WTE (`r round_half_up(nhs24wte_prevqtr_pdiff, 1)`%) over the last quarter.

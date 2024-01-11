@@ -1,0 +1,135 @@
+---
+title: "FMQ Scottish Ambulance Service"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+sas_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_sas_wte.rds")),
+  )
+
+# Load in wte and headcount by job family and board. This can be used for 2006 data
+hc_wte_data <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_hc_wte_data.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+### For this FMQ, we include figures for staff in post in SAS, Paramedics and 
+# ambulance technicians
+
+# For SAS 
+# Add in 2006 figure for SAS staff
+sas_wte_06 <- hc_wte_data %>%
+  filter(census_date == "2006-September") %>%
+  filter(board == "Scottish Ambulance Service") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For previous quarter
+sas_wte_prevquarter <- sas_wte %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+sas_wte_new <- sas_wte %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+saswte_prev_ndiff <- sas_wte_prevquarter - sas_wte_06
+saswte_new_ndiff <- sas_wte_new - sas_wte_06
+
+# calculate the percentage difference with 2006
+saswte_prev_pdiff <- (saswte_prev_ndiff/sas_wte_06) *100
+saswte_new_pdiff <- (saswte_new_ndiff/sas_wte_06) *100
+
+
+# For Paramedics
+# For 2007 figure
+paramedics_07 <- sas_wte %>%
+  filter(subjob_family == "Paramedics") %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+paramedics_prevquarter <- sas_wte %>%
+  filter(subjob_family == "Paramedics") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+paramedics_new <- sas_wte %>%
+  filter(subjob_family == "Paramedics") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+paramedics_prev_ndiff <- paramedics_prevquarter - paramedics_07
+paramedics_new_ndiff <- paramedics_new - paramedics_07
+
+# calculate the percentage difference with 2007
+paramedics_prev_pdiff <- (paramedics_prev_ndiff/paramedics_07) *100
+paramedics_new_pdiff <- (paramedics_new_ndiff/paramedics_07) *100
+
+
+# For Ambulance Technicians
+# For 2007 figure
+ambulancetech_07 <- sas_wte %>%
+  filter(subjob_family == "Technician") %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+ambulancetech_prevquarter <- sas_wte %>%
+  filter(subjob_family == "Technician") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+ambulancetech_new <- sas_wte %>%
+  filter(subjob_family == "Technician") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+ambulancetech_prev_ndiff <- ambulancetech_prevquarter - ambulancetech_07
+ambulancetech_new_ndiff <- ambulancetech_new - ambulancetech_07
+
+# calculate the percentage difference with 2007
+ambulancetech_prev_pdiff <- (ambulancetech_prev_ndiff/ambulancetech_07) *100
+ambulancetech_new_pdiff <- (ambulancetech_new_ndiff/ambulancetech_07) *100
+```
+
+
+**Previous quarter (`r prev_quarter`):**  
+*	Scottish Ambulance Service staffing is `r ifelse((saswte_prev_pdiff < 0), "down", "up")` `r round_half_up(saswte_prev_pdiff,1)`% under the SNP, by `r format(round_half_up(saswte_prev_ndiff, 1), big.mark =",")`  WTE between September 2006 and `r prev_quarter`, and now stands at `r format(round_half_up(sas_wte_prevquarter, 1), big.mark =",")` WTE.  
+*	Paramedics are `r ifelse((paramedics_prev_pdiff < 0), "down", "up")` by `r round_half_up(paramedics_prev_pdiff,1)`% (`r round_half_up(paramedics_prev_ndiff,1)` WTE) from Sep 2007 to `r prev_quarter`, and now stand at `r format(round_half_up(paramedics_prevquarter, 1), big.mark =",")` WTE.    
+*	Ambulance Technicians are `r ifelse((ambulancetech_prev_pdiff < 0), "down", "up")` by `r round_half_up(ambulancetech_prev_pdiff,1)`% (`r round_half_up(ambulancetech_prev_ndiff,1)` from Sep 2007 to `r prev_quarter`, and now stand at `r format(round_half_up(ambulancetech_prevquarter, 1), big.mark =",")` WTE.  
+
+**New quarter (`r new_quarter`):**   
+*	Scottish Ambulance Service staffing is `r ifelse((saswte_new_pdiff < 0), "down", "up")` `r round_half_up(saswte_new_pdiff,1)`% under the SNP, by `r format(round_half_up(saswte_new_ndiff, 1), big.mark =",")`  WTE between September 2006 and `r new_quarter`, and now stands at `r format(round_half_up(sas_wte_new, 1), big.mark =",")` WTE.  
+*	Paramedics are `r ifelse((paramedics_new_pdiff < 0), "down", "up")` by `r round_half_up(paramedics_new_pdiff,1)`% (`r round_half_up(paramedics_new_ndiff,1)` WTE) from Sep 2007 to `r new_quarter`, and now stand at `r format(round_half_up(paramedics_new, 1), big.mark =",")` WTE.    
+*	Ambulance Technicians are `r ifelse((ambulancetech_new_pdiff < 0), "down", "up")` by `r round_half_up(ambulancetech_new_pdiff,1)`% (`r round_half_up(ambulancetech_new_ndiff,1)` from Sep 2007 to `r new_quarter`, and now stand at `r format(round_half_up(ambulancetech_new, 1), big.mark =",")` WTE.  

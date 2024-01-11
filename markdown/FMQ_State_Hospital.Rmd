@@ -1,0 +1,185 @@
+---
+title: "FMQ State Hospital"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+statehospital_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_statehospital_wte.rds")),
+  )
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+### For this FMQ, we include figures for all staff in post in State Hospital, M&D, N&M and AHP and other staff in State Hospital
+
+### For all State Hospital staff
+# For 2007 figure
+statehospital_07 <- statehospital_wte %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+statehospital_prevquarter <- statehospital_wte %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+statehospital_new <- statehospital_wte %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+statehospital_prev_ndiff <- statehospital_prevquarter - statehospital_07
+statehospital_new_ndiff <- statehospital_new - statehospital_07
+
+# calculate the percentage difference with 2006
+statehospital_prev_pdiff <- (statehospital_prev_ndiff/statehospital_07) *100
+statehospital_new_pdiff <- (statehospital_new_ndiff/statehospital_07) *100
+
+
+### For M&D State Hospital staff
+# For 2007 figure
+md_statehospital_07 <- statehospital_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+md_statehospital_prevquarter <- statehospital_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+md_statehospital_new <- statehospital_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+md_statehospital_prev_ndiff <- md_statehospital_prevquarter - md_statehospital_07
+md_statehospital_new_ndiff <- md_statehospital_new - md_statehospital_07
+
+# calculate the percentage difference with 2006
+md_statehospital_prev_pdiff <- (md_statehospital_prev_ndiff/md_statehospital_07) *100
+md_statehospital_new_pdiff <- (md_statehospital_new_ndiff/md_statehospital_07) *100
+
+
+### For N&M State Hospital staff
+# For 2007 figure
+nm_statehospital_07 <- statehospital_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+nm_statehospital_prevquarter <- statehospital_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+nm_statehospital_new <- statehospital_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+nm_statehospital_prev_ndiff <- nm_statehospital_prevquarter - nm_statehospital_07
+nm_statehospital_new_ndiff <- nm_statehospital_new - nm_statehospital_07
+
+# calculate the percentage difference with 2006
+nm_statehospital_prev_pdiff <- (nm_statehospital_prev_ndiff/nm_statehospital_07) *100
+nm_statehospital_new_pdiff <- (nm_statehospital_new_ndiff/nm_statehospital_07) *100
+
+### For AHP State Hospital staff
+# For 2007 figure
+ahp_statehospital_07 <- statehospital_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+ahp_statehospital_prevquarter <- statehospital_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+ahp_statehospital_new <- statehospital_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+ahp_statehospital_prev_ndiff <- ahp_statehospital_prevquarter - ahp_statehospital_07
+ahp_statehospital_new_ndiff <- ahp_statehospital_new - ahp_statehospital_07
+
+# calculate the percentage difference with 2006
+ahp_statehospital_prev_pdiff <- (ahp_statehospital_prev_ndiff/ahp_statehospital_07) *100
+ahp_statehospital_new_pdiff <- (ahp_statehospital_new_ndiff/ahp_statehospital_07) *100
+
+### For other State Hospital staff
+# For 2007 figure
+others_statehospital_07 <- statehospital_wte %>%
+  filter(!job_family %in% c("Allied health professions", "Nursing & midwifery", "Medical & dental")) %>%
+  summarise(sep07_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep07_sum)
+
+# For previous quarter
+others_statehospital_prevquarter <- statehospital_wte %>%
+  filter(!job_family %in% c("Allied health professions", "Nursing & midwifery", "Medical & dental")) %>%
+  summarise(prevquarter_sum = sum(prevquarter_wte)) %>%
+  dplyr::pull(prevquarter_sum)
+
+# For current quarter
+others_statehospital_new <- statehospital_wte %>%
+  filter(!job_family %in% c("Allied health professions", "Nursing & midwifery", "Medical & dental")) %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+others_statehospital_prev_ndiff <- others_statehospital_prevquarter - others_statehospital_07
+others_statehospital_new_ndiff <- others_statehospital_new - others_statehospital_07
+
+# calculate the percentage difference with 2006
+others_statehospital_prev_pdiff <- (others_statehospital_prev_ndiff/others_statehospital_07) *100
+others_statehospital_new_pdiff <- (others_statehospital_new_ndiff/others_statehospital_07) *100
+```
+
+**Previous: Sep-07 to `r prev_quarter`**  
+
+* The overall workforce at State Hospital has `r ifelse ((statehospital_prev_pdiff<0),"decreased","increased")` by `r round_half_up(statehospital_prev_pdiff,1)`% or `r round_half_up(statehospital_prev_ndiff,1)` WTE, from `r round_half_up(statehospital_07,1)` WTE at September 2007 to `r round_half_up(statehospital_prevquarter,1)` WTE at `r prev_quarter`.  
+* The Medical workforce at State Hospital has `r ifelse ((md_statehospital_prev_pdiff<0),"decreased","increased")` by  `r round_half_up(md_statehospital_prev_pdiff,1)`% or `r round_half_up(md_statehospital_prev_ndiff,1)` WTE, from `r round_half_up(md_statehospital_07,1)` WTE at September 2007 to `r round_half_up(md_statehospital_prevquarter,1)` WTE at `r prev_quarter`.  
+*	The Nursing and Midwifery workforce at State Hospital has  `r ifelse ((nm_statehospital_prev_pdiff<0),"decreased","increased")` by  `r round_half_up(nm_statehospital_prev_pdiff,1)`% or `r round_half_up(nm_statehospital_prev_ndiff,1)` WTE, from `r round_half_up(nm_statehospital_07,1)` WTE at September 2007 to `r round_half_up(nm_statehospital_prevquarter,1)` WTE at `r prev_quarter`.  
+*	The AHP workforce at State Hospital has `r ifelse ((ahp_statehospital_prev_pdiff<0),"decreased","increased")` by  `r round_half_up(ahp_statehospital_prev_pdiff,1)`% or `r round_half_up(ahp_statehospital_prev_ndiff,1)` WTE, from `r round_half_up(ahp_statehospital_07,1)` WTE at September 2007 to `r round_half_up(ahp_statehospital_prevquarter,1)` WTE at `r prev_quarter`. The number of AHPs, specifically occupational therapists, decreased suddenly in April 2012 at the time of the new State Hospital building opening. This decrease is likely to be the result of a recording/classification issue.  
+*	Other staff at State Hospital have  `r ifelse ((others_statehospital_prev_pdiff<0),"decreased","increased")` by `r round_half_up(others_statehospital_prev_pdiff,1)`% or `r round_half_up(others_statehospital_prev_ndiff,1)` WTE, from `r round_half_up(others_statehospital_07,1)` WTE at September 2007 to `r round_half_up(others_statehospital_prevquarter,1)` WTE at `r prev_quarter`.  
+
+**New: Sep-07 to `r new_quarter`**  
+
+* The overall workforce at State Hospital has `r ifelse ((statehospital_new_pdiff<0),"decreased","increased")` by `r round_half_up(statehospital_new_pdiff,1)`% or `r round_half_up(statehospital_new_ndiff,1)` WTE, from `r round_half_up(statehospital_07,1)` WTE at September 2007 to `r round_half_up(statehospital_new,1)` WTE at `r new_quarter`.  
+* The Medical workforce at State Hospital has `r ifelse ((md_statehospital_new_pdiff<0),"decreased","increased")` by  `r round_half_up(md_statehospital_new_pdiff,1)`% or `r round_half_up(md_statehospital_new_ndiff,1)` WTE, from `r round_half_up(md_statehospital_07,1)` WTE at September 2007 to `r round_half_up(md_statehospital_new,1)` WTE at `r new_quarter`.  
+*	The Nursing and Midwifery workforce at State Hospital has  `r ifelse ((nm_statehospital_new_pdiff<0),"decreased","increased")` by  `r round_half_up(nm_statehospital_new_pdiff,1)`% or `r round_half_up(nm_statehospital_new_ndiff,1)` WTE, from `r round_half_up(nm_statehospital_07,1)` WTE at September 2007 to `r round_half_up(nm_statehospital_new,1)` WTE at `r new_quarter`.  
+*	The AHP workforce at State Hospital has `r ifelse ((ahp_statehospital_new_pdiff<0),"decreased","increased")` by  `r round_half_up(ahp_statehospital_new_pdiff,1)`% or `r round_half_up(ahp_statehospital_new_ndiff,1)` WTE, from `r round_half_up(ahp_statehospital_07,1)` WTE at September 2007 to `r round_half_up(ahp_statehospital_new,1)` WTE at `r new_quarter`. The number of AHPs, specifically occupational therapists, decreased suddenly in April 2012 at the time of the new State Hospital building opening. This decrease is likely to be the result of a recording/classification issue.  
+*	Other staff at State Hospital have  `r ifelse ((others_statehospital_new_pdiff<0),"decreased","increased")` by `r round_half_up(others_statehospital_new_pdiff,1)`% or `r round_half_up(others_statehospital_new_ndiff,1)` WTE, from `r round_half_up(others_statehospital_07,1)` WTE at September 2007 to `r round_half_up(others_statehospital_new,1)` WTE at `r new_quarter`.  

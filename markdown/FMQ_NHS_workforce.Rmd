@@ -1,0 +1,495 @@
+---
+title: "FMQ NHS Workforce"
+author: "Workforce and Pay Analytics"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+```{r, include=TRUE, echo=FALSE}
+### 0 - Setup
+
+## Run setup scripts where needed data and libraries are loaded
+## output destination folder also created there
+
+source(here::here("code", "00_setup.R"))
+
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+### 1 - Read in rds files that were prepared in setup file
+
+detailed_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_detailed_wte.rds")),
+  )
+
+hc_wte_data <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_hc_wte_data.rds")),
+  )
+
+wte_pd <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_wte_pd.rds")),
+  )
+
+nm_wte <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_nm_wte.rds")),
+  )
+
+consultantwte_td <- read_rds(
+  here("data", folder_loc, paste0(briefing_round, "_consultantwte_td.rds")),
+  )
+
+### 1B. Check for the record highs
+recordhigh_all <- hc_wte_data %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  slice(which.max(value)) %>%
+  dplyr::pull(value)
+
+recordhigh_nm <- hc_wte_data %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  slice(which.max(value)) %>%
+  dplyr::pull(value)
+
+recordhigh_ahp <- hc_wte_data %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Allied health professions") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  slice(which.max(value)) %>%
+  dplyr::pull(value)
+
+recordhigh_consultants <- consultantwte_td %>%
+  slice(which.max(value)) %>%
+  dplyr::pull(value)
+```
+
+
+```{r, include=TRUE, echo=FALSE}
+
+### For this FMQ, we include headcount and wte for all staff in post  
+# We also need some wte for specific specialties 
+
+### For headcount and wte data for present quarter
+
+allhc_new <- hc_wte_data %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Headcount") %>%
+  dplyr::pull(value)
+
+allwte_new <- hc_wte_data %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+
+### For all WTE data for other areas of interests
+# 2006 data 
+allwte_06 <- hc_wte_data %>%
+  filter(census_date == "2006-September") %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For reference to pre-pandemic, we use Dec 2019 data
+allwte_dec19 <- hc_wte_data %>%
+  filter(census_date == "2019-December") %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For previous year's total staff in post WTE
+allwte_prevyear <- hc_wte_data %>%
+  filter(census_date %in% prevyear_briefing_round) %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+
+##### Comparisons of all staff data to different time points
+# calculate the difference with 2006 and previous year
+allwte_new_ndiff <- allwte_new - allwte_06
+allwte_prevyear_ndiff <- allwte_new - allwte_prevyear
+allwte_dec19_ndiff <- allwte_new - allwte_dec19
+# calculate the percentage difference with 2006 and previous year
+allwte_new_pdiff <- (allwte_new_ndiff/allwte_06) *100
+allwte_prevyear_pdiff <- (allwte_prevyear_ndiff/allwte_prevyear) *100
+allwte_dec19_pdiff <- (allwte_dec19_ndiff/allwte_dec19) *100
+
+
+
+##### For permanent wte
+# For previous year
+allpermanentwte_prevyear<- wte_pd %>%
+  filter(contract == "Permanent") %>%
+  summarise(prevyear_sum = sum(prevyear_wte)) %>%
+  dplyr::pull(prevyear_sum)
+
+# For current quarter
+allpermanentwte_new<- wte_pd %>%
+  filter(contract == "Permanent") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with previous year/quarter
+allpermanentwte_prevyear_ndiff <- allpermanentwte_new - allpermanentwte_prevyear
+# calculate the percentage difference
+allpermanentwte_prevyear_pdiff <- (allpermanentwte_prevyear_ndiff/allpermanentwte_prevyear) *100
+
+
+
+# For N&M analysis
+# For all N&M 2006
+nmwte_06 <- hc_wte_data %>%
+  filter(census_date == "2006-September") %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For previous year's N&M WTE
+nmwte_prevyear <- hc_wte_data %>%
+  filter(census_date %in% prevyear_briefing_round) %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For current quarter
+nmwte_new <- hc_wte_data %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# calculate the difference with 2006
+nm_new_ndiff <- nmwte_new - nmwte_06
+nm_prevyear_ndiff <- nmwte_new - nmwte_prevyear
+# calculate the percentage difference with 2006
+nm_new_pdiff <- (nm_new_ndiff/nmwte_06) *100
+nm_prevyear_pdiff <- (nm_prevyear_ndiff/nmwte_prevyear) *100
+
+# For qualified N&M
+# Since we don't have data for 2006 qualified N&M, we use 2007 data
+#qual_nmwte_06 <- 41026.2 The figure is from legacy table/code value and could not be verified
+
+qual_nmwte_07 <- detailed_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(sep2007_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep2007_sum)
+
+# For current quarter for qual N&M
+qual_nmwte_new <- detailed_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(band_grouping == "Qualified") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+qualnm_new_ndiff <- qual_nmwte_new - qual_nmwte_07
+# calculate the percentage difference with 2007
+qualnm_new_pdiff <- (qualnm_new_ndiff/qual_nmwte_07) *100
+
+
+# For N&M support
+# Since we don't have data for 2006 N&M breakdown by band, we use 2007 data
+#qual_nmwte_06 <- 41026.2 The figure is from legacy table/code value and could not be verified
+
+support_nmwte_07 <- detailed_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(band_grouping == "Support") %>%
+  summarise(sep2007_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep2007_sum)
+
+# For current quarter for support N&M
+support_nmwte_new <- detailed_wte %>%
+  filter(job_family == "Nursing & midwifery") %>%
+  filter(band_grouping == "Support") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+supportnm_new_ndiff <- support_nmwte_new - support_nmwte_07
+# calculate the percentage difference with 2007
+support_nmnew_pdiff <- (supportnm_new_ndiff/support_nmwte_07) *100
+
+
+### For AHPs (excluding paramedics)
+
+# For 2006 data - can use the headcount/wte data because paramedics were 
+# not included in AHPs in 2006
+ahpwte_06 <- hc_wte_data %>%
+  filter(census_date == "2006-September") %>%
+  filter(board == "Scotland") %>%
+  filter(job_family == "Allied health professions") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For current quarter - have to use the detailed data so that we can remove 
+# paramedics from them
+ahpwte_new <- detailed_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  filter(!subjob_family == "Paramedics") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+ahp_new_ndiff <- ahpwte_new - ahpwte_06
+# calculate the percentage difference with 2006
+ahp_new_pdiff <- (ahp_new_ndiff/ahpwte_06) *100
+
+
+
+
+####### For relevant data for specific specialties
+# We use data that can breakdown by bands or sub-job families
+
+# Consultant wte for 2006 are hard coded because data table not available on 
+# new dashboards. Hard coded data are taken from ISD tables.
+
+#For all consultants
+consultants_wte_06 <- 3636.545
+
+consultants_wte_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+consultants_new_ndiff <- consultants_wte_new - consultants_wte_06
+# calculate the percentage difference with 2006
+consultants_new_pdiff <- (consultants_new_ndiff/consultants_wte_06) *100
+
+
+# For A&E consultants
+emergency_cons_06 <- 75.755
+
+emergency_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family == "Emergency medicine") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+emergency_new_ndiff <- emergency_cons_new - emergency_cons_06
+# calculate the percentage difference with 2006
+emergency_new_pdiff <- (emergency_new_ndiff/emergency_cons_06) *100
+
+
+# For Anaesthetics consultants
+anaesthetics_cons_06 <- 549.033
+
+anaesthetics_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family == "Anaesthetics") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+anaesthetics_new_ndiff <- anaesthetics_cons_new - anaesthetics_cons_06
+# calculate the percentage difference with 2006
+anaesthetics_new_pdiff <- (anaesthetics_new_ndiff/anaesthetics_cons_06) *100
+
+
+# For Radiology consultants
+radiology_cons_06 <- 223.525
+
+radiology_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family == "Clinical radiology") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+radiology_new_ndiff <- radiology_cons_new - radiology_cons_06
+# calculate the percentage difference with 2006
+radiology_new_pdiff <- (radiology_new_ndiff/radiology_cons_06) *100
+
+
+# For all Psychiatry consultants
+psychiatry_cons_06 <- 444.668
+
+psychiatry_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family %in% c("General psychiatry", "Child & adolescent psychiatry", "Forensic psychiatry", "Old age psychiatry", "Psychiatry of learning disability", "Psychotherapy")) %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+psychiatry_new_ndiff <- psychiatry_cons_new - psychiatry_cons_06
+# calculate the percentage difference with 2006
+psychiatry_new_pdiff <- (psychiatry_new_ndiff/psychiatry_cons_06) *100
+
+
+# For Oncology consultants
+oncology_cons_06 <- 69.542
+
+oncology_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family %in% c("Clinical oncology", "Medical oncology")) %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+oncology_new_ndiff <- oncology_cons_new - oncology_cons_06
+# calculate the percentage difference with 2006
+oncology_new_pdiff <- (oncology_new_ndiff/oncology_cons_06) *100
+
+
+# For Paediatrics consultants
+paediatrics_cons_06 <- 162.972
+
+paediatrics_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family == "Paediatrics") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+paediatrics_new_ndiff <- paediatrics_cons_new - paediatrics_cons_06
+# calculate the percentage difference with 2006
+paediatrics_new_pdiff <- (paediatrics_new_ndiff/paediatrics_cons_06) *100
+
+
+# For Cardiothoracic surgery consultants
+cardiothoracic_cons_06 <- 26.636
+
+cardiothoracic_cons_new <- detailed_wte %>%
+  filter(job_family == "Medical & dental") %>%
+  filter(band_grouping == "Consultant") %>%
+  filter(subjob_family == "Cardiothoracic surgery") %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2006
+cardiothoracic_new_ndiff <- cardiothoracic_cons_new - cardiothoracic_cons_06
+# calculate the percentage difference with 2006
+cardiothoracic_new_pdiff <- (cardiothoracic_new_ndiff/cardiothoracic_cons_06) *100
+
+
+
+### For radiography staff
+# For 2007
+radiography_07 <- detailed_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  filter(subjob_family %in% c("Radiography - diagnostic", "Radiography - theraputic")) %>%
+  summarise(sep2007_sum = sum(sep2007_wte)) %>%
+  dplyr::pull(sep2007_sum)
+
+radiography_new <- detailed_wte %>%
+  filter(job_family == "Allied health professions") %>%
+  filter(subjob_family %in% c("Radiography - diagnostic", "Radiography - theraputic")) %>%
+  summarise(new_sum = sum(new_wte)) %>%
+  dplyr::pull(new_sum)
+
+# calculate the difference with 2007
+radiography_new_ndiff <- radiography_new - radiography_07
+# calculate the percentage difference with 2007
+radiography_new_pdiff <- (radiography_new_ndiff/radiography_07) *100
+
+
+### For NHS 24 staff
+
+#For 2007 WTE
+nhs24wte_07 <- hc_wte_data %>%
+  filter(census_date == "2007-September") %>%
+  filter(board == "NHS 24") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+#For previous quarter wte
+nhs24wte_prevquarter <- hc_wte_data %>%
+  filter(census_date %in% prevquarter_briefing_round) %>%
+  filter(board == "NHS 24") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+#For current quarter wte
+nhs24wte_new <- hc_wte_data %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(board == "NHS 24") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Whole Time Equivalent") %>%
+  dplyr::pull(value)
+
+# For current quarter headcount
+nhs24hc_new <- hc_wte_data %>%
+  filter(census_date %in% briefing_round) %>%
+  filter(board == "NHS 24") %>%
+  filter(job_family == "All staff") %>%
+  filter(headcount_wte == "Headcount") %>%
+  dplyr::pull(value)
+
+# calculate the difference with 2007
+nhs24_prev_ndiff <- nhs24wte_new - nhs24wte_prevquarter
+nhs24_new_ndiff <- nhs24wte_new - nhs24wte_07
+# calculate the percentage difference with 2007
+nhs24_prev_pdiff <- (nhs24_prev_ndiff/nhs24wte_prevquarter)*100
+nhs24_new_pdiff <- (nhs24_new_ndiff/nhs24wte_07) *100
+
+```
+
+
+* Under the SNP, NHS staffing is `r ifelse ((allwte_new > recordhigh_all),"at a record high," ,"")` up by around `r format(round(allwte_new_ndiff, -2), big.mark =",")` WTE (to `r format(round_half_up(allwte_new, 1), big.mark = ",")` WTE), or `r round_half_up(allwte_new_pdiff, 1)`%, (Sept 2006 to `r new_quarter`).
+
+*	__Medical & Dental Consultants__ `r ifelse ((consultants_wte_new >= recordhigh_consultants),"are at record high,","are")` up by `r round_half_up(consultants_new_pdiff, 1)`% under the SNP (since Sept 2006 by `r format(round_half_up(consultants_new_ndiff, 1), big.mark =",")` WTE to `r format(round_half_up(consultants_wte_new, 1), big.mark =",")` WTE). In the same period:
+
+  + A&E Consultants `r ifelse ((emergency_cons_06*3 < emergency_cons_new),"more than tripled","")` (`r round_half_up(emergency_cons_06, 1)` to `r round_half_up(emergency_cons_new, 1)` WTE).
+
+  + `r round_half_up(anaesthetics_new_pdiff, 1)`% more Anaesthetics Consultants (`r round_half_up(anaesthetics_cons_06, 1)` to `r round_half_up(anaesthetics_cons_new, 1)` WTE).
+
+  +	`r round_half_up(psychiatry_new_pdiff, 1)`% more for all Psychiatry specialties (`r round_half_up(psychiatry_cons_06, 1)` to `r round_half_up(psychiatry_cons_new, 1)` WTE).
+
+  +	`r round_half_up(radiology_new_pdiff, 1)`% more Clinical Radiology Consultants (`r round_half_up(radiology_cons_06, 1)` to `r round_half_up(radiology_cons_new, 1)` WTE).
+
+  +	`r round_half_up(oncology_new_pdiff, 1)`% more Consultants Oncologists (`r round_half_up(oncology_cons_06, 1)` to `r round_half_up(oncology_cons_new, 1)` WTE).
+
+*	Overall __Nursing and Midwifery__ staffing is `r ifelse ((nmwte_new >= recordhigh_nm),"at record high,","")` up by `r round_half_up(nm_new_pdiff, 1)`% since September 2006, (by `r format(round_half_up(nm_new_ndiff, 1), big.mark =",")` WTE to `r format(round_half_up(nmwte_new, 1), big.mark =",")` WTE).
+
+*	Qualified Nurses & Midwives up by `r round_half_up(qualnm_new_pdiff, 1)`% since September 2007, (by `r format(round_half_up(qualnm_new_ndiff,1), big.mark =",")` WTE to `r format(round_half_up(qual_nmwte_new, 1), big.mark =",")` WTE).
+
+*	__Allied Health Professionals__ (excluding paramedics) are `r ifelse ((ahpwte_new >= recordhigh_ahp),"at record high,","")` up `r round_half_up(ahp_new_pdiff, 1)`% since September 2006 (by `r format(round_half_up(ahp_new_ndiff,1), big.mark =",")` WTE to `r format(round_half_up(ahpwte_new,1), big.mark =",")` WTE).
+
+*	We've increased __Radiography staff__ from `r format(round_half_up(radiography_07, 1), big.mark = ",")` WTE to `r format(round_half_up(radiography_new,1), big.mark =",")` WTE since September 2007 - **a `r round_half_up(radiography_new_pdiff, 1)`% increase** (September 2007 - `r new_quarter`).
+
+* NHS Scotland staffing levels `r ifelse ((allpermanentwte_prevyear_pdiff < 0 ),"down", "up")` `r format(round_half_up(allpermanentwte_prevyear_ndiff, 1), big.mark = ",")` permanent whole time equivalent in the last year - __meaning ten years of growth__.
+
+**Since the outset of the pandemic, staffing numbers have increased by `r round_half_up(allwte_dec19_pdiff, 1)`%, and `r ifelse ((allwte_new > allwte_prevyear),"increased","decreased")` by `r round_half_up(allwte_prevyear_pdiff, 1)`% in the last year.**
+
+**CONSULTANTS - Medical and Dental Consultants are `r ifelse ((consultants_wte_new > recordhigh_consultants),"at historically high level","up")`  by `r round_half_up(consultants_new_pdiff, 1)`% under the SNP (since Sept 2006).**
+
+* The `r round_half_up(consultants_new_pdiff, 1)`% increase in consultants is an increase of `r format(round_half_up(consultants_new_ndiff, 1), big.mark =",")` WTE (since September 2006 to `r format(round_half_up(consultants_wte_new, 1), big.mark =",")` WTE as at `r new_quarter`).
+  + Anaesthetic Consultants have increased by `r round_half_up(anaesthetics_new_pdiff, 1)`% (from `r round_half_up(anaesthetics_cons_06, 1)` as at Sept 2006 to `r round_half_up(anaesthetics_cons_new, 1)` WTE as at `r new_quarter`).
+  + Paediatric consultants have increased by `r round_half_up(paediatrics_new_pdiff, 1)`% (from `r round_half_up(paediatrics_cons_06, 1)` as at Sept 2006 to `r round_half_up(paediatrics_cons_new, 1)` WTE as at `r new_quarter`).
+  + Cardiothoracic surgery consultants have increased by `r round_half_up(cardiothoracic_new_pdiff, 1)`% (from `r round_half_up(cardiothoracic_cons_06, 1)` as at Sept 2006 to `r round_half_up(cardiothoracic_cons_new, 1)` WTE as at `r new_quarter`).
+  + Psychiatric specialties consultants have increased by `r round_half_up(psychiatry_new_pdiff, 1)`% (from `r round_half_up(psychiatry_cons_06, 1)` as at Sept 2006 to `r round_half_up(psychiatry_cons_new, 1)` WTE as at `r new_quarter`).
+
+**As at `r new_quarter`, NHS 24 has a total of `r format(round_half_up(nhs24wte_new, 1), big.mark =",")` WTE (`r format(round_half_up(nhs24hc_new, 1), big.mark =",")`headcount) staff in post.**
+
+* Total staff in post in NHS 24 has increased by `r format(round_half_up(nhs24_new_ndiff, 1), big.mark =",")` WTE (`r round_half_up(nhs24_new_pdiff, 1)`%) since September 2007, and has increased by `r round_half_up(nhs24_prev_ndiff, 1)` WTE (`r round_half_up(nhs24_prev_pdiff, 1)`%) over the last quarter.
+
+
